@@ -18,7 +18,7 @@ import math as m # math library
 from scipy.spatial import distance
 import numpy as np
 import scipy as sp
-#import pandas as pd
+import pandas as pd
 
 #import plotly # import graphics library
 #plotly.tools.set_credentials_file(username='agu3rra', api_key='b6WWbmeqKfYxPkQJBnw8') # setting up credentials; Plotly is an online service.
@@ -41,46 +41,59 @@ def deg2rad (degrees):
 
 def rad2deg (radians):
     # Converts from radians to degrees
-    return radians*180/m/pi
+    return radians*180/m.pi
 
 def calculateV (lat):
     # Return v for the given latitude in degrees
     latRad = deg2rad(lat) # converts to radians
     return a/m.sqrt(1-e2*m.pow(m.sin(latRad),2))
 
-def geo2cat (pointG):
+def geo2cat (lat,lon,ele):
     # Returns point in Cartesian coordinates given its Geographic coordinates
-    # data returned in a tuple
-
-    #parsing input tuple
-    lat = pointG[0] # latitude in degrees
-    lon = pointG[1] # longitude in degrees
-    alt = pointG[2] # elevation above sea level in meters
+    # Data returned in Pandas Series form
 
     v = calculateV(lat)
 
     latRad = deg2rad(lat)
     lonRad = deg2rad(lon)
-    z = (v*(1-e2)+alt)*m.sin(latRad)
-    y = (v+alt)*m.cos(latRad)*m.sin(lonRad)
-    x = (v+alt)*m.cos(latRad)*m.cos(lonRad)
+    z = (v*(1-e2)+ele)*m.sin(latRad)
+    y = (v+ele)*m.cos(latRad)*m.sin(lonRad)
+    x = (v+ele)*m.cos(latRad)*m.cos(lonRad)
 
-    pointC = (x,y,z)
+    pointC = pd.Series(dict(x=x, y=y, z=z))
     return pointC # returns point in Cartesian coordinates
 
 # ----- # ----- # ----- # ----- # ----- # ----- # ----- # ----- # ----- # -----
 # Test code for distance measurements and conversion from Geographic to
 # Cartesian Coordinates
 
-# point1=(-24.9361993186,-51.3906013593,883.16)
-# point2=(-24.9356264155,-51.3912779465,882.69)
-# pa = geo2cat(point1)
-# pb = geo2cat(point2)
+# pa = geo2cat(-24.9361993186,-51.3906013593,883.16)
+# pb = geo2cat(-24.9356264155,-51.3912779465,882.69)
 #
 # dst = distance.euclidean(pa,pb)
 # print(dst)
+# print(pa)
+# print(pb)
 
 # ----- # ----- # ----- # ----- # ----- # ----- # ----- # ----- # ----- # -----
 # MAIN CODE
 
 # Reading data from CSV file and placing it on a numpy array
+dfGPS = pd.read_csv('gpsData.csv', sep=',') # import csv data into pandas dataframe
+
+# Add Cartesian coordinates to data frame
+#print(dfGPS[['latitude','longitude','elevation']].apply(geo2cat))
+#dfGPS['x'], dfGPS['y'], dfGPS['z'] = geo2cat(dfGPS['latitude'], dfGPS['longitude'], dfGPS['elevation'])
+dfGPS['x'], dfGPS['y'], dfGPS['z'] = geo2cat(dfGPS['latitude'], dfGPS['longitude'], dfGPS['elevation'])
+print(dfGPS.head(3))
+
+# Plotting data
+# fig1 = pylab.figure()
+# ax = Axes3D(fig1)
+# x = dfGPS[['latitude']]
+# y = dfGPS[['longitude']]
+# z = dfGPS[['elevation']]
+#
+#
+# ax.scatter(x,y,z)
+# plt.show()

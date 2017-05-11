@@ -12,7 +12,7 @@ trackPoints = collection.getElementsByTagName("trkpt")
 
 # Read in all the data of interest
 file = open("gpsData.csv",'w') # create output file
-file.write("latitude,longitude,elevation")
+file.write("latitude,longitude,elevation\n")
 
 for point in trackPoints:
     lati = point.getAttribute("lat")
