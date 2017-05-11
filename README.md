@@ -1,37 +1,11 @@
-## Welcome to GitHub Pages
+## Earthworks Python
 
-You can use the [editor on GitHub](https://github.com/agu3rra/earthworks/edit/master/README.md) to maintain and preview the content for your website in Markdown files.
+Welcome to my Earthworks Python application.
 
-Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
+### Why?
+This application comes out of a necessity of computing cut and fill volumes required for leveling terrains on electrical substations construction sites.
 
-### Markdown
+### How does it work?
+Given a .gpx file obtained from a GPS survey on the terrain, the construciton area (delimited by 4 GPS points) and a reference elevation this application will compute the required cut and fill volumes for leveling the terrain and plot corresponding graphs.
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/agu3rra/earthworks/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://help.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+As GPS coordinates are based on a Geographic Coordinate System, these coordinates are converted into a Cartesian Coordinate System in order to make use of linear algebra for computing the volumes.
