@@ -18,7 +18,7 @@ import math as m # math library
 from scipy.spatial import distance
 import numpy as np
 import scipy as sp
-import pandas as pd
+#import pandas as pd
 
 #import plotly # import graphics library
 #plotly.tools.set_credentials_file(username='agu3rra', api_key='b6WWbmeqKfYxPkQJBnw8') # setting up credentials; Plotly is an online service.
