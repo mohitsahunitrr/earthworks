@@ -1,6 +1,6 @@
 ## Python Earthworks
 
-Welcome to my Earthworks Python application.
+Welcome to the Python Earthworks program.
 
 ### Why?
 This application comes out of a necessity of computing cut and fill volumes required for leveling terrains on electrical substations construction sites.
