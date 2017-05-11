@@ -1,4 +1,4 @@
-## Earthworks Python
+## Python Earthworks
 
 Welcome to my Earthworks Python application.
 
