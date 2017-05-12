@@ -19,9 +19,14 @@ from scipy.spatial import distance
 import numpy as np
 import scipy as sp
 import pandas as pd
+import os
+my_plotly_api_key = os.environ.get('MY_PLOTLY_API_KEY')
+# setting up a key:
+# in Terminal:
+# export MY_PLOTLY_API_KEY = 'DHAHH3DSAD43D' (EXAMPLE)
 
 import plotly
-plotly.tools.set_credentials_file(username='agu3rra', api_key='b6WWbmeqKfYxPkQJBnw8') # setting up credentials; Plotly is an online service.
+plotly.tools.set_credentials_file(username='agu3rra', api_key=my_plotly_api_key) # setting up credentials; Plotly is an online service.
 import plotly.plotly as py # import graphics library
 import plotly.graph_objs as go
 
