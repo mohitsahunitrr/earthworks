@@ -20,11 +20,10 @@ import numpy as np
 import scipy as sp
 import pandas as pd
 
-#import plotly # import graphics library
-#plotly.tools.set_credentials_file(username='agu3rra', api_key='b6WWbmeqKfYxPkQJBnw8') # setting up credentials; Plotly is an online service.
-import matplotlib.pyplot as plt
-import pylab
-from mpl_toolkits.mplot3d import Axes3D
+import plotly
+plotly.tools.set_credentials_file(username='agu3rra', api_key='b6WWbmeqKfYxPkQJBnw8') # setting up credentials; Plotly is an online service.
+import plotly.plotly as py # import graphics library
+import plotly.graph_objs as go
 
 # ----- # ----- # ----- # ----- # ----- # ----- # ----- # ----- # ----- # -----
 # Global variables
@@ -48,7 +47,7 @@ def calculateV (lat):
     latRad = deg2rad(lat) # converts to radians
     return a/m.sqrt(1-e2*m.pow(m.sin(latRad),2))
 
-def geo2cat (lat,lon,ele):
+def geo2car (lat,lon,ele):
     # Returns point in Cartesian coordinates given its Geographic coordinates
     # Data returned in Pandas Series form
 
@@ -81,19 +80,41 @@ def geo2cat (lat,lon,ele):
 # Reading data from CSV file and placing it on a numpy array
 dfGPS = pd.read_csv('gpsData.csv', sep=',') # import csv data into pandas dataframe
 
-# Add Cartesian coordinates to data frame
-#print(dfGPS[['latitude','longitude','elevation']].apply(geo2cat))
-#dfGPS['x'], dfGPS['y'], dfGPS['z'] = geo2cat(dfGPS['latitude'], dfGPS['longitude'], dfGPS['elevation'])
-dfGPS['x'], dfGPS['y'], dfGPS['z'] = geo2cat(dfGPS['latitude'], dfGPS['longitude'], dfGPS['elevation'])
-print(dfGPS.head(3))
+# Create a Cartesian Coordinates dataframe
+dfCartesian = pd.DataFrame([]) # initialize new dataframe
+for rowIndex, row in dfGPS.iterrows(): #Iterating thru elements in dataframe
+    pointCartesian = geo2car(row['latitude'],row['longitude'],row['elevation']) # convert to cartesian coordinates
+    dfCartesian = dfCartesian.append(pointCartesian, ignore_index=True) # append newly converted data to dataframe
+dfCartesian.to_csv('gpsDataCartesian.csv',index=False) # save to file
 
 # Plotting data
-# fig1 = pylab.figure()
-# ax = Axes3D(fig1)
-# x = dfGPS[['latitude']]
-# y = dfGPS[['longitude']]
-# z = dfGPS[['elevation']]
-#
-#
-# ax.scatter(x,y,z)
-# plt.show()
+x = dfCartesian[['x']].values
+y = dfCartesian[['y']].values
+z = dfCartesian[['z']].values
+
+trace1 = go.Scatter3d(
+    x=x,
+    y=y,
+    z=z,
+    mode='markers',
+    marker=dict(
+        size=5,
+        line=dict(
+            color='rgba(217, 217, 217, 0.14)',
+            width=0.5
+        ),
+        opacity=0.8
+    )
+)
+
+data = [trace1]
+layout = go.Layout(
+    margin=dict(
+        l=0,
+        r=0,
+        b=0,
+        t=0
+    )
+)
+fig = go.Figure(data=data, layout=layout)
+py.iplot(fig, filename='simple-3d-scatter')
