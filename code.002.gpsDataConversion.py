@@ -15,6 +15,8 @@
 # ----- # ----- # ----- # ----- # ----- # ----- # ----- # ----- # ----- # -----
 # Imports
 import math as m # math library
+import utm # library for UTM projection map conversion
+
 from scipy.spatial import distance
 import numpy as np
 import scipy as sp
@@ -86,16 +88,22 @@ def geo2car (lat,lon,ele):
 dfGPS = pd.read_csv('gpsData.csv', sep=',') # import csv data into pandas dataframe
 
 # Create a Cartesian Coordinates dataframe
-dfCartesian = pd.DataFrame([]) # initialize new dataframe
+dfUTM = pd.DataFrame([]) # initialize new dataframe
 for rowIndex, row in dfGPS.iterrows(): #Iterating thru elements in dataframe
-    pointCartesian = geo2car(row['latitude'],row['longitude'],row['elevation']) # convert to cartesian coordinates
-    dfCartesian = dfCartesian.append(pointCartesian, ignore_index=True) # append newly converted data to dataframe
-dfCartesian.to_csv('gpsDataCartesian.csv',index=False) # save to file
+    point = utm.from_latlon(row['latitude'],row['longitude']) # convert to UTM coordinates
+    pointUTM = pd.Series(dict(
+                            x=point[0],
+                            y=point[1],
+                            z=row['elevation'],
+                            zoneNumber=point[2],
+                            zoneLetter=point[3]))
+    dfUTM = dfUTM.append(pointUTM, ignore_index=True) # append newly converted data to dataframe
+dfUTM.to_csv('gpsDataUTM.csv',index=False) # save to file
 
-# Plotting data
-x = dfCartesian[['x']].values
-y = dfCartesian[['y']].values
-z = dfCartesian[['z']].values
+#Plotting data
+x = dfUTM[['x']].values
+y = dfUTM[['y']].values
+z = dfUTM[['z']].values
 
 trace1 = go.Scatter3d(
     x=x,
