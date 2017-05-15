@@ -98,6 +98,11 @@ for rowIndex, row in dfGPS.iterrows(): #Iterating thru elements in dataframe
                             zoneNumber=point[2],
                             zoneLetter=point[3]))
     dfUTM = dfUTM.append(pointUTM, ignore_index=True) # append newly converted data to dataframe
+
+# add x_rel, y_rel, z_rel coordinates relative position.
+dfUTM['x_rel'] = dfUTM['x'] - dfUTM['x'].min()
+dfUTM['y_rel'] = dfUTM['y'] - dfUTM['y'].min()
+dfUTM['z_rel'] = dfUTM['z'] - dfUTM['z'].min()
 dfUTM.to_csv('gpsDataUTM.csv',index=False) # save to file
 
 #Plotting data
