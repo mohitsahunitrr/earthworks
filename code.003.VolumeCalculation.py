@@ -10,4 +10,6 @@ import plotly.plotly as py # import graphics library
 import plotly.graph_objs as go
 
 # Data loading
-dfCoordinates = pd.read_csv('gpsDataCartesian') # reads data into dataframe
+dfCoordinates = pd.read_csv('gpsDataUTM.csv') # reads data into dataframe
+
+# Calculate volume of earth from the lowest measured point
