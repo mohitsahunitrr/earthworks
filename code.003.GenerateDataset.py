@@ -1,3 +1,8 @@
+# Update on 20.APR.2017:
+# -Code is taking too long to run. I'll try another technique:
+# >> Group point 3 at a time, buid a triangular mesh, cast a shadow on the xy plane and calcule que volume of the generated solid:
+# >> polyhedron: rectangular base oblique pyramid (1/3 b*w*h) + triangle area * height
+
 # Imports
 import math as m
 import pandas as pd
