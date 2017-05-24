@@ -20,7 +20,7 @@ plotly.tools.set_credentials_file(username='agu3rra', api_key=my_plotly_api_key)
 import plotly.plotly as py # import graphics library
 import plotly.graph_objs as go
 
-def getIntegerInput(prompt):
+def getIntegerInput(prompt=''):
     # get input from user.
     # loop until one of the options is selected
     # options is a list with the available options
@@ -161,7 +161,7 @@ def computeVolumeTriangularMesh(A,B,C):
     totalError = abs(error1)+abs(error2)
     return [totalVolume, totalError] # return total volume
 
-def computeVolumePointCloud(dfPointCloud, how='cut'):
+def computeVolumePointCloud(dfPointCloud, how='cut', enablePrompts=True):
     # given a point cloud (x,y,z coordinates), computes the volume of corresponding solid in relation to z=0 using a sum of triagular meshes
     # dfPointCloud is expected to be a pandas dataframe with relative coordinates (x,y,z)
     # Optional inputs:
@@ -172,7 +172,7 @@ def computeVolumePointCloud(dfPointCloud, how='cut'):
     totalError = 0.0
     iteration = 0
     pointCount = dfPointCloud['x'].count()
-    print('Computing volume from triangular meshes.')
+    if enablePrompts: print('Computing volume from triangular meshes.')
     for i in range(dfPointCloud['x'].count()-2): # iterate thru all groups of 3 points in ascending order from origin.
         s1 = dfPointCloud.iloc[i] # get series (row entry)
         s2 = dfPointCloud.iloc[i+1]
@@ -192,8 +192,9 @@ def computeVolumePointCloud(dfPointCloud, how='cut'):
         volume, error = computeVolumeTriangularMesh(A,B,C)
 
         # Update Progress Bar
-        iteration += 1
-        printProgressBar(iteration, pointCount-2, prefix = 'Progress:', suffix = 'Complete', length = 50)
+        if enablePrompts:
+            iteration += 1
+            printProgressBar(iteration, pointCount-2, prefix = 'Progress:', suffix = 'Complete', length = 50)
 
         totalVolume += volume # add to total volume
         totalError += error # accumulate error
