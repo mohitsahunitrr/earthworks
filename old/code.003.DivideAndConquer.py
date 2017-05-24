@@ -108,10 +108,10 @@ def computeVolume(A,B,C):
 # MAIN...
 
 # Data loading
-print('Loding survey data.')
+print('Loading survey data.')
 dfCoordinates = pd.read_csv('gpsDataUTM.csv') # reads data into dataframe
 pointCount = dfCoordinates['x'].count()
-print('{x} points collected from survey data.'.format(x=pointCount))
+print('{x} points collected.'.format(x=pointCount))
 
 # Adding new info to dataframe: distance from origin (common reference to all points)
 print('Adding common reference to point cloud.')
