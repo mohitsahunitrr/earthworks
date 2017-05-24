@@ -34,7 +34,9 @@ dfCoordinates = dfCoordinates.sort_values(by=['oDist'],
                                           ascending=True)
 
 # Ask user for desired terrain elevation to be leveled
-desiredElevation = getIntegerInput('Please inform the relative elevation to level: ')
+z_max = dfCoordinates.z_rel.max()
+print('Maximum relative terrain elevation: {ele:.2f}'.format(ele=z_max))
+desiredElevation = getIntegerInput('Please input desired terrain level: ')
 desiredElevation = float(desiredElevation)
 
 # splitting point cloud for cut and fill computation
@@ -49,6 +51,12 @@ if(desiredElevation != 0.0):
 print('------------------------------------------')
 print('Calculating amount of cut volume required.')
 dfCut = dfCoordinates[(dfCoordinates['z_rel'] >= desiredElevation)]
+
+# update z_rel = z_rel - desiredElevation
+pd.options.mode.chained_assignment = None  # default='warn'
+dfCut['z_rel'] = dfCut.z_rel.apply(lambda x: x-desiredElevation) # update z_rel = z_rel - desiredElevation
+pd.options.mode.chained_assignment = 'warn'  # default='warn'
+
 totalVolume, totalError = computeVolumePointCloud(dfCut, how='cut')
 print('The total cut volume is: {v:.2f} cubic meters.'.format(v=totalVolume))
 print('Accumutaled integration error: {e}.'.format(e=totalError))

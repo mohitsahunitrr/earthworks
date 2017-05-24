@@ -172,7 +172,7 @@ def computeVolumePointCloud(dfPointCloud, how='cut'):
     totalError = 0.0
     iteration = 0
     pointCount = dfPointCloud['x'].count()
-    print('Computing volume from triagular meshes.')
+    print('Computing volume from triangular meshes.')
     for i in range(dfPointCloud['x'].count()-2): # iterate thru all groups of 3 points in ascending order from origin.
         s1 = dfPointCloud.iloc[i] # get series (row entry)
         s2 = dfPointCloud.iloc[i+1]
