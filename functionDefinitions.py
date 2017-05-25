@@ -9,6 +9,7 @@ import os
 from scipy import integrate
 import utm # library for UTM projection map conversion
 from datetime import datetime
+import time
 
 # XML parsing libraries
 from xml.dom.minidom import parse
