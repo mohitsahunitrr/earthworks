@@ -8,6 +8,7 @@ import scipy as sp
 import os
 from scipy import integrate
 import utm # library for UTM projection map conversion
+from datetime import datetime
 
 # XML parsing libraries
 from xml.dom.minidom import parse
@@ -20,17 +21,21 @@ plotly.tools.set_credentials_file(username='agu3rra', api_key=my_plotly_api_key)
 import plotly.plotly as py # import graphics library
 import plotly.graph_objs as go
 
-def getIntegerInput(prompt=''):
+# Plotting with Bokeh
+from bokeh.plotting import figure, show, output_file
+from bokeh.models import HoverTool, BoxSelectTool
+
+def getNumericalInput(prompt=''):
     # get input from user.
     # loop until one of the options is selected
     # options is a list with the available options
     while (True):
         userInput = input(prompt)
         try:
-            userInput = int(userInput)
+            userInput = float(userInput)
             break
         except ValueError:
-            print("Invalid. Input must be an integer value. Try again.")
+            print("Invalid. Input must be numerical. Try again.")
     return userInput
 
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
