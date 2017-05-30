@@ -65,7 +65,7 @@ def computeOptimalVolumes(dfCoordinates, stepSize=1.0):
     minimumPCDensity = 2 # minimum required point cloud density for accurate measurements
     z_max = dfCoordinates.z_rel.max() # compute maximum relative elevation
     checkElevations = np.arange(0,z_max-1,stepSize) # check elevations in step size of X meters
-    iterations = len(checkElevations)
+    iterations = len(checkElevations)-1
     iterationCounter = 0
     for desiredElevation in checkElevations: # calculate cut and fill for all elevations store results in a pandas dataframe
         # Compute fill

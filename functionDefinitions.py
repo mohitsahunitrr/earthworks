@@ -21,6 +21,7 @@ import plotly
 plotly.tools.set_credentials_file(username='agu3rra', api_key=my_plotly_api_key) # setting up credentials; Plotly is an online service.
 import plotly.plotly as py # import graphics library
 import plotly.graph_objs as go
+from plotly.offline import download_plotlyjs, plot
 
 # Plotting with Bokeh
 from bokeh.plotting import figure, show, output_file
@@ -219,3 +220,23 @@ def computeVolumePointCloud(dfPointCloud, how='cut', enablePrompts=True):
     else:
         print('Invalid argument passed to function call. how must be either \'cut\' or \'fill\'')
         return [None, None]
+
+def plotTerrain(dfCoordinates, plotFile = 'plot.html'):
+    # Plots a 3D Scatter in Plotly using x,y,z coordinates from dataset
+    trace = go.Scatter3d(
+        x = dfCoordinates['x_rel'],
+        y = dfCoordinates['y_rel'],
+        z = dfCoordinates['z_rel'],
+        name = 'Terrain',
+        mode='markers',
+        marker=dict(
+            size=3,
+            line=dict(
+                color='rgba(217, 217, 217, 0.14)',
+                width=0.5
+            ),
+            opacity=0.8
+        ),
+        connectgaps=False
+    )
+    return plot([trace],filename=plotFile)
