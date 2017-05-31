@@ -221,22 +221,47 @@ def computeVolumePointCloud(dfPointCloud, how='cut', enablePrompts=True):
         print('Invalid argument passed to function call. how must be either \'cut\' or \'fill\'')
         return [None, None]
 
-def plotTerrain(dfCoordinates, plotFile = 'plot.html'):
+def plotTerrain(dictPlotData, plotFile = 'plot.html'):
     # Plots a 3D Scatter in Plotly using x,y,z coordinates from dataset
-    trace = go.Scatter3d(
-        x = dfCoordinates['x_rel'],
-        y = dfCoordinates['y_rel'],
-        z = dfCoordinates['z_rel'],
-        name = 'Terrain',
-        mode='markers',
-        marker=dict(
-            size=3,
-            line=dict(
-                color='rgba(217, 217, 217, 0.14)',
-                width=0.5
+    # dictDataframes is expected to be a dictionary with dataFrame, seriesName and rgba config string
+    traces = []
+    for entry in dictPlotData:
+        trace = go.Scatter3d(
+            x = entry.df['x_rel'],
+            y = entry.df['y_rel'],
+            z = entry.df['z_rel'],
+            name = entry.name,
+            mode='markers',
+            marker=dict(
+                size=4,
+                line=dict(
+                    color=entry.color,
+                    width=0.5
+                ),
+                opacity=0.8
             ),
-            opacity=0.8
+            connectgaps=False,
+            projection=dict(x=dict(show=True, opacity=0.3),
+                            y=dict(show=True, opacity=0.3),
+                            z=dict(show=True, opacity=0.3))
+        )
+        traces.append(trace)
+    layout = go.Layout(
+        autosize=False,
+        width=1000,
+        height=600,
+        margin=go.Margin(
+            l=10, # left margin
+            r=10, # right margin
+            b=10, # below margin
+            t=10, # top margin
+            pad=4
         ),
-        connectgaps=False
+        paper_bgcolor='#ffffff',
+        #xaxis=dict(color='#234')
+        plot_bgcolor='#fff3ff'
+        #title='Terrain data'
     )
-    return plot([trace],filename=plotFile)
+    fig = go.Figure(data=traces,layout=layout)
+    return plot(fig,filename=plotFile)
+    # return plot(traces,filename=plotFile)

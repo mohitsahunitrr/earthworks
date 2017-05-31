@@ -2,6 +2,7 @@
 
 from functionDefinitions import *
 from mainFlow import *
+from classes import *
 
 # Custom functions:
 # parseGpxFile # parses input .gpx file
@@ -96,25 +97,24 @@ while True:
                         # Full dataset print
                         print('---------------------')
                         print('Plotting terrain data')
-                        url = plotTerrain(dfFull)
+                        plot1 = [scatterPlotData(dfFull,'Terrain','rgba(217, 217, 217, 0.14)')] #data frame to plot, name of the series and color
+                        url = plotTerrain(plot1)
                         print('Data plotted successfully at:')
                         print(url)
                         print('-----------------------------')
                         break
                     elif optionLevel2==2:
-                        # Print full dataset plus cut and fill
+                        # Plot cut and fill
                         z_max = dfFull.z_rel.max()
                         while True:
                             reference = getNumericalInput('Please provide reference elevation <= {z:.2f}: '.format(z=z_max))
                             if (reference <= z_max):
                                 dfCut = dfFull[(dfFull['z_rel'] >= reference)]
-                                pd.options.mode.chained_assignment = None  # default='warn'
-                                dfCut['z_rel'] = dfCut.z_rel.apply(lambda x: x-reference) # update z_rel = z_rel - reference
-                                pd.options.mode.chained_assignment = 'warn'  # default='warn'
                                 dfFill = dfFull[(dfFull['z_rel'] < reference)]
-                                urlFull = plotTerrain(dfFull,'plotFull.html')
-                                urlCut = plotTerrain(dfCut,'plotCut.html')
-                                urlFill = plotTerrain(dfFill,'plotFill.html')
+                                plot1 = scatterPlotData(dfCut,'Cut','rgba(217, 217, 217, 0.14)')
+                                plot2 = scatterPlotData(dfFill,'Fill','rgba(117, 117, 117, 0.14)')
+                                plotData = [plot1,plot2]
+                                urlFull = plotTerrain(plotData,'plot.html')
                                 print('Data plotted successfully at application folder.')
                                 print('------------------------------------------------')
                                 break
