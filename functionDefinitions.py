@@ -10,6 +10,7 @@ from scipy import integrate
 import utm # library for UTM projection map conversion
 from datetime import datetime
 import time
+from scipy.spatial import ConvexHull
 
 # XML parsing libraries
 from xml.dom.minidom import parse
@@ -83,10 +84,10 @@ def parseGpxFile (filePath):
         file.write(lati+","+long+","+alti+"\n") # output to file and process next point
     file.close() #close output file
 
-def generateUTM (filePath):
+def generateUTM (sourcePath,destinationPath):
     # reads csv file with parsed latitude, longitude and elevation. Outputs another csv file containing additional UTM coordinates
-    # Output file: gpsDataUTM.csv
-    dfGPS = pd.read_csv(filePath, sep=',') # import csv data into pandas dataframe
+    # both inputs are strings
+    dfGPS = pd.read_csv(sourcePath, sep=',') # import csv data into pandas dataframe
     dfUTM = pd.DataFrame([]) # initialize new dataframe
     for rowIndex, row in dfGPS.iterrows(): #Iterating thru elements in dataframe
         point = utm.from_latlon(row['latitude'],row['longitude']) # convert to UTM coordinates
@@ -102,7 +103,23 @@ def generateUTM (filePath):
     dfUTM['x_rel'] = dfUTM['x'] - dfUTM['x'].min()
     dfUTM['y_rel'] = dfUTM['y'] - dfUTM['y'].min()
     dfUTM['z_rel'] = dfUTM['z'] - dfUTM['z'].min()
-    dfUTM.to_csv('gpsDataUTM.csv',index=False) # save to file
+    dfUTM.to_csv(destinationPath,index=False) # save to file
+
+def limitsUTM (dfUTM):
+    # takes a dataframe with x,y coordinates (latitude,longitude) and converts to UTM coordinates
+    # returns a dataframe with converted coordinates
+    dfLimits = pd.DataFrame([]) # initialize new dataframe
+    for rowIndex, row in dfUTM.iterrows(): #Iterating thru elements in dataframe
+        point = utm.from_latlon(row['latitude'],row['longitude']) # convert to UTM coordinates
+        pointUTM = pd.Series(dict(
+                                latitude=row['latitude'],
+                                longitude=row['longitude'],
+                                x=point[0],
+                                y=point[1],
+                                zoneNumber=point[2],
+                                zoneLetter=point[3]))
+        dfLimits = dfLimits.append(pointUTM, ignore_index=True) # append newly converted data to dataframe
+    return dfLimits
 
 def distanceFromOrigin(x,y,z):
     # computes distance from origin <0,0,0>
@@ -178,9 +195,9 @@ def computeVolumePointCloud(dfPointCloud, how='cut', enablePrompts=True):
     totalVolume = 0.0 # initialize volume summation holder
     totalError = 0.0
     iteration = 0
-    pointCount = dfPointCloud['x'].count()
+    pointCount = dfPointCloud['x_rel'].count()
     if enablePrompts: print('Computing volume from triangular meshes.')
-    for i in range(dfPointCloud['x'].count()-2): # iterate thru all groups of 3 points in ascending order from origin.
+    for i in range(dfPointCloud['x_rel'].count()-2): # iterate thru all groups of 3 points in ascending order from origin.
         s1 = dfPointCloud.iloc[i] # get series (row entry)
         s2 = dfPointCloud.iloc[i+1]
         s3 = dfPointCloud.iloc[i+2]
@@ -265,3 +282,100 @@ def plotTerrain(dictPlotData, plotFile = 'plot.html'):
     fig = go.Figure(data=traces,layout=layout)
     return plot(fig,filename=plotFile)
     # return plot(traces,filename=plotFile)
+
+def filterTerrainLimits(dfSurvey,dfLimits):
+    # given a survey dataframe and a dataframe containing terrain boundaries, filters out points ouside of boundaries
+    # filtered terrain is returned in a dataframe
+
+    # terrain limits are defined by a quadrilateral polygon (ABCD).
+    # for each point in the survey data, check if point projection (x,y coordinates) are inside the quadrilateral
+    #   inside: ABCD == PAB + PBC + PAD + PCD
+
+    # Step 1: Check if dfLimits has only 4 points
+    if (dfLimits.x_rel.count() != 4):
+        print('Error: Terrain isn\'t limited by 4 points.')
+        return None
+
+    # Step 2: Name terrain limits ABCD (for program readability)
+    A = np.array([dfLimits.iloc[0].x_rel, dfLimits.iloc[0].y_rel])
+    B = np.array([dfLimits.iloc[1].x_rel, dfLimits.iloc[1].y_rel])
+    C = np.array([dfLimits.iloc[2].x_rel, dfLimits.iloc[2].y_rel])
+    D = np.array([dfLimits.iloc[3].x_rel, dfLimits.iloc[3].y_rel])
+
+    # Step 3: Iterate thru points and determine if point is within terrain limits
+    dfFiltered = pd.DataFrame([])
+    print(dfSurvey.x_rel.count())
+    for i in range(dfSurvey.x.count()):
+        P = np.array([dfSurvey.iloc[i].x_rel, dfSurvey.iloc[i].y_rel])
+        if (pointWithinQuadLimits(P,A,B,C,D)==True):
+            dfEntry = pd.Series(dict(x_rel=P[0],
+                                     y_rel=P[1],
+                                     z_rel=dfSurvey.iloc[i].z_rel)) # adding z coordinate
+            dfFiltered = dfFiltered.append(dfEntry,ignore_index=True)
+        printProgressBar(i, dfSurvey.x.count()-1, prefix = 'Progress:', suffix = 'Complete', length = 50)
+    return dfFiltered
+
+def centroid(arr):
+    length = arr.shape[0]
+    sum_x = np.sum(arr[:,0])
+    sum_y = np.sum(arr[:,1])
+    return sum_x/length, sum_y/length
+
+def angleFromCentroid(x,y,xc,yc):
+    origin = np.zeros(2) # create origin <0,0>
+    centroid = np.array([xc,yc])
+    CA = np.array([x,y])-centroid # computes vector CA: centroid -> A
+    OC = centroid-origin # computes vector OC: origin -> centroid
+    angle1 = m.atan2(OC[1],OC[0]) # computes angle in radians between OC and the x axis
+    angle2 = m.atan2(CA[1],CA[0]) # computes angle between CA and the x axis
+    angleAC = angle2-angle1
+    if (angleAC < 0):
+        angleAC += 2*m.pi # for negative angles, sum 2*𝝿 to get range from 0->2𝝿
+    return angleAC
+
+def clockwiseArray(arr):
+    # retuns arr in a clockwise fashion in a dataframe format
+    # arr is a collection of 2D points in the cartesian plane xy; numpy array format expected
+    xc,yc = centroid(arr) # computes centroid of the collection of points
+    df = pd.DataFrame(arr,columns=['x','y']) # change numpy array into a DataFrame
+    df['xc'] = xc # add center to list of entries; Think about how to change this later as it looks ugly in code
+    df['yc'] = yc
+    df['angle'] = np.vectorize(angleFromCentroid)(df['x'],df['y'],df['xc'],df['yc']) # add new column: angle between point and centroid vector
+    df = df.sort_values(by='angle',ascending=False) # sorts according to angle
+    return df
+
+def pointWithinQuadLimits(P,A,B,C,D):
+    # given a point P, determines whether or not it is inside quadrilateral ABCD
+    square = np.array([A,B,C,D])
+    sqArea = ConvexHull(square).volume # computes the volume of the convex hull. As we are in 2D, that corresponds to the area
+
+    # sort ABCD in clockwise fashion
+    dfSorted = clockwiseArray(square)
+
+    # rearrange ABCD in clockwise order
+    A = dfSorted.iloc[0][['x','y']].values
+    B = dfSorted.iloc[1][['x','y']].values
+    C = dfSorted.iloc[2][['x','y']].values
+    D = dfSorted.iloc[3][['x','y']].values
+
+    # inside: ABCD == PAB + PBC + PAD + PCD
+    T1 = np.array([P,A,B])
+    T2 = np.array([P,B,C])
+    T3 = np.array([P,C,D])
+    T4 = np.array([P,A,D])
+
+    trArea = 0.0
+    trArea += ConvexHull(T1).volume
+    trArea += ConvexHull(T2).volume
+    trArea += ConvexHull(T3).volume
+    trArea += ConvexHull(T4).volume
+
+    if (round(sqArea,2)==round(trArea,2)):
+        return True
+    else:
+        return False
+
+def pointWithingPolygon(P,Poly):
+    # To be implemented just for fun:
+    # True if point is inside 2D points delimited by Poly; False otherwise.
+    return True

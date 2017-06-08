@@ -26,8 +26,7 @@ def createRelativeDataframe(dfCoordinates):
     print('Maximum relative terrain elevation: {ele:.2f}'.format(ele=z_max)) # report maximum elevation
     return dfCoordinates
 
-def computeVolumesFromElevation(dfCoordinates): # calculate volumes based on given elevation
-    desiredElevation = getNumericalInput('Please input desired terrain level: ')
+def computeVolumesFromElevation(dfCoordinates,desiredElevation): # calculate volumes based on given elevation
 
     startTime = datetime.now() # start the clock on this script
     # splitting point cloud for cut and fill computation
@@ -36,7 +35,7 @@ def computeVolumesFromElevation(dfCoordinates): # calculate volumes based on giv
         print('Calculating amount of fill volume required.')
         dfFill = dfCoordinates[(dfCoordinates['z_rel'] < desiredElevation)]
         totalVolume, totalError = computeVolumePointCloud(dfFill, how='fill', enablePrompts=True)
-        print('The total fill volume is: {v:.2f} cubic meters.'.format(v=totalVolume))
+        print('The total fill volume is: {v:,.2f} cubic meters.'.format(v=totalVolume))
         print('Accumutaled integration error: {e}.'.format(e=totalError))
 
     print('------------------------------------------')
@@ -49,7 +48,7 @@ def computeVolumesFromElevation(dfCoordinates): # calculate volumes based on giv
     pd.options.mode.chained_assignment = 'warn'  # default='warn'
 
     totalVolume, totalError = computeVolumePointCloud(dfCut, how='cut', enablePrompts=True)
-    print('The total cut volume is: {v:.2f} cubic meters.'.format(v=totalVolume))
+    print('The total cut volume is: {v:,.2f} cubic meters.'.format(v=totalVolume))
     print('Accumutaled integration error: {e}.'.format(e=totalError))
     print('Computation process completed.')
     print('Script runtime: {t}'.format(t=datetime.now() - startTime))
