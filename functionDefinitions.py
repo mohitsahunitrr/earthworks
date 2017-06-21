@@ -11,6 +11,7 @@ import utm # library for UTM projection map conversion
 from datetime import datetime
 import time
 from scipy.spatial import ConvexHull
+from scipy.spatial import Delaunay # for constructing a triangular mesh
 
 # XML parsing libraries
 from xml.dom.minidom import parse
@@ -197,10 +198,16 @@ def computeVolumePointCloud(dfPointCloud, how='cut', enablePrompts=True):
     iteration = 0
     pointCount = dfPointCloud['x_rel'].count()
     if enablePrompts: print('Computing volume from triangular meshes.')
-    for i in range(dfPointCloud['x_rel'].count()-2): # iterate thru all groups of 3 points in ascending order from origin.
-        s1 = dfPointCloud.iloc[i] # get series (row entry)
-        s2 = dfPointCloud.iloc[i+1]
-        s3 = dfPointCloud.iloc[i+2]
+
+
+    # Adding piece of code to do the triangulation of meshes.
+    tri = Delaunay(dfPointCloud[['x_rel','y_rel']]) # Pass on the x, y coordinates and get triangular meshes' indexes.
+    mesh = tri.simplices # mesh contains a matrix holding indexes of all triangles for which we need to calculate
+
+    for i in range(len(mesh)):
+        s1 = dfPointCloud.iloc[mesh[i][0]] # get series (row entry)
+        s2 = dfPointCloud.iloc[mesh[i][1]]
+        s3 = dfPointCloud.iloc[mesh[i][2]]
 
         dfAnalysis = pd.DataFrame([]) # build dataframe composed of these 3 entry set
         dfAnalysis = dfAnalysis.append(s1,ignore_index=True)
@@ -218,7 +225,7 @@ def computeVolumePointCloud(dfPointCloud, how='cut', enablePrompts=True):
         # Update Progress Bar
         if enablePrompts:
             iteration += 1
-            printProgressBar(iteration, pointCount-2, prefix = 'Progress:', suffix = 'Complete', length = 50)
+            printProgressBar(iteration, len(mesh), prefix = 'Progress:', suffix = 'Complete', length = 50)
 
         totalVolume += volume # add to total volume
         totalError += error # accumulate error

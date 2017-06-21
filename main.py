@@ -54,8 +54,12 @@ while True:
         elif (optionLevel1==4): # Option 3: Compute volumes
             # [1] Compute volumes for a given terrain elevation.
             # [2] Find elevation for optimal volumes (cut equals fill)
+            # COMMENTING FOR USING TEST SET 01
             dfSurvey = loadSurveyData() # load dataframe from csv file
             dfSurvey = createRelativeDataframe(dfSurvey) # add relative coordinates (x_rel,y_rel,z_rel)
+            # COMMENTING FOR USING TEST SET 01
+            #dfSurvey = pd.read_csv('generatedPointCloud.csv')
+            # COMMENTING FOR USING TEST SET 01
             x_max = dfSurvey.x_rel.max()
             y_max = dfSurvey.y_rel.max()
             z_max = dfSurvey.z_rel.max()
