@@ -1,7 +1,7 @@
 # Main user interface.
 
-from functionDefinitions import *
-from mainFlow import *
+from functionsEarthworks import *
+from functionsProgramFlow import *
 from classes import *
 
 # Custom functions:
@@ -58,7 +58,7 @@ while True:
             dfSurvey = loadSurveyData() # load dataframe from csv file
             dfSurvey = createRelativeDataframe(dfSurvey) # add relative coordinates (x_rel,y_rel,z_rel)
             # COMMENTING FOR USING TEST SET 01
-            #dfSurvey = pd.read_csv('generatedPointCloud.csv')
+            # dfSurvey = pd.read_csv('generatedPointCloud.csv')
             # COMMENTING FOR USING TEST SET 01
             x_max = dfSurvey.x_rel.max()
             y_max = dfSurvey.y_rel.max()
@@ -74,6 +74,7 @@ while True:
                 if optionLevel2 in (1,2,3,4):
                     if optionLevel2==1:
                         desiredElevation = getNumericalInput('Please input desired terrain level: ')
+                        startTime = datetime.now() # start the clock on this script
                         try:
                             dfLimits
                         except NameError: # dfLimits was not defined
@@ -81,7 +82,8 @@ while True:
                             print('Terrain width = {w:.2f}'.format(w=x_max))
                             print('Terrain length = {l:.2f}'.format(l=y_max))
                             # print('Aproximate terrain rectangular area = {a:.2f}'.format(a=x_max*y_max)) calculate area; not always rectangular
-                            computeVolumesFromElevation(dfSurvey,desiredElevation) # compute entire terrain
+                            cutVol, cutErr, fillVol, fillErr = computePointCloudVolume(dfSurvey, elevation = desiredElevation, enablePrompts=True)
+
                         else: # compute on filtered data
                             # add relative coordinates to the limits dataframe; depens on minimum/maximum values of x,y
                             dfLimits['x_rel'] = dfLimits.x - dfSurvey.x.min()
@@ -99,9 +101,16 @@ while True:
                             plotFiltered = scatterPlotData(dfFiltered,'Filtered data','rgba(17, 17, 17, 0.14)')
                             plots = [plotFull,plotLimits,plotFiltered]
                             print(dfFiltered.head())
-                            computeVolumesFromElevation(dfFiltered,desiredElevation) # compute
+                            cutVol, cutErr, fillVol, fillErr = computePointCloudVolume(dfFiltered, elevation = desiredElevation, enablePrompts=True)
                             url = plotTerrain(plots,'plotBoundaries.html') # plot data
 
+                        print('The total cut volume is: {v:,.2f} cubic meters.'.format(v=cutVol))
+                        print('Accumutaled integration error: {e}.'.format(e=cutErr))
+                        print('The total fill volume is: {v:,.2f} cubic meters.'.format(v=fillVol))
+                        print('Accumutaled integration error: {e}.'.format(e=fillErr))
+                        print('Computation process completed.')
+                        print('Script runtime: {t}'.format(t=datetime.now() - startTime))
+                        print('---------------------------')
                         break # go back to previous menu
                     elif optionLevel2==2: # Find optimal values
                         print('------------------------------------')
@@ -112,7 +121,6 @@ while True:
                             print('Construction limits were not defined. Using the entire terrain.')
                             print('Terrain width = {w:.2f}'.format(w=x_max))
                             print('Terrain length = {l:.2f}'.format(l=y_max))
-                            # print('Aproximate terrain rectangular area = {a:.2f}'.format(a=x_max*y_max)) calculate area; not always rectangular
                             dfVol = computeOptimalVolumes(dfSurvey,stepElevation)
                         else: # compute on filtered data
                             # add relative coordinates to the limits dataframe; depens on minimum/maximum values of x,y

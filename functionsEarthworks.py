@@ -1,4 +1,4 @@
-# Function definitions
+# Main function definitions to implement specific routines related to earthworks
 
 # Imports
 import math as m
@@ -30,9 +30,7 @@ from bokeh.plotting import figure, show, output_file
 from bokeh.models import HoverTool, BoxSelectTool
 
 def getNumericalInput(prompt=''):
-    # get input from user.
-    # loop until one of the options is selected
-    # options is a list with the available options
+    # gets numerical input from user.
     while (True):
         userInput = input(prompt)
         try:
@@ -43,6 +41,7 @@ def getNumericalInput(prompt=''):
     return userInput
 
 def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, length = 100, fill = '█'):
+    # prints a progress bar
     # Code extract from stackoverflow :) just like magic!
     """
     Call in a loop to create terminal progress bar
@@ -65,29 +64,29 @@ def printProgressBar (iteration, total, prefix = '', suffix = '', decimals = 1, 
 
 def parseGpxFile (filePath):
     # parses .gpx file and saves it into a csv file called gpsData.csv
-    DOMTree = xml.dom.minidom.parse(filePath)
+    DOMTree = xml.dom.minidom.parse(filePath) # builds a tree structure from XML file
     collection = DOMTree.documentElement
-
-    # Get all track points in the collection
-    trackPoints = collection.getElementsByTagName("trkpt")
+    trackPoints = collection.getElementsByTagName("trkpt") # Get all track points in the collection
 
     # Read in all the data of interest
     file = open("gpsData.csv",'w') # create output file
-    file.write("latitude,longitude,elevation\n")
+    file.write("latitude,longitude,elevation\n") # header line
 
     for point in trackPoints:
         lati = point.getAttribute("lat")
         long = point.getAttribute("lon")
         altx = point.getElementsByTagName('ele')[0]
         alti = altx.childNodes[0].data
-
         # all data types are str; checked: print(type(lati),type(long),type(alti))
         file.write(lati+","+long+","+alti+"\n") # output to file and process next point
     file.close() #close output file
 
 def generateUTM (sourcePath,destinationPath):
     # reads csv file with parsed latitude, longitude and elevation. Outputs another csv file containing additional UTM coordinates
-    # both inputs are strings
+    # expects both inputs to be strings
+    # expects columns named latitude and longitude to be present at
+    # returns generated data in a pandas dataframe format
+
     dfGPS = pd.read_csv(sourcePath, sep=',') # import csv data into pandas dataframe
     dfUTM = pd.DataFrame([]) # initialize new dataframe
     for rowIndex, row in dfGPS.iterrows(): #Iterating thru elements in dataframe
@@ -105,8 +104,10 @@ def generateUTM (sourcePath,destinationPath):
     dfUTM['y_rel'] = dfUTM['y'] - dfUTM['y'].min()
     dfUTM['z_rel'] = dfUTM['z'] - dfUTM['z'].min()
     dfUTM.to_csv(destinationPath,index=False) # save to file
+    return dfUTM
 
 def limitsUTM (dfUTM):
+    # This funciton is used to return the construction area limits in UTM coordinates
     # takes a dataframe with x,y coordinates (latitude,longitude) and converts to UTM coordinates
     # returns a dataframe with converted coordinates
     dfLimits = pd.DataFrame([]) # initialize new dataframe
@@ -129,7 +130,7 @@ def distanceFromOrigin(x,y,z):
     return np.linalg.norm(point-origin) # compute norm
 
 def computeLineEquation(A,B):
-    # computes line equation given 2 points: A and B
+    # computes line equation given 2 points: A and B in 2D space
     # Both A and B need to be numpy arrays
 
     if (B[0]-A[0]) == 0: # Check if line is parallel to y axis (zero divide)
@@ -186,29 +187,24 @@ def computeVolumeTriangularMesh(A,B,C):
     totalError = abs(error1)+abs(error2)
     return [totalVolume, totalError] # return total volume
 
-def computeVolumePointCloud(dfPointCloud, how='cut', enablePrompts=True):
-    # given a point cloud (x,y,z coordinates), computes the volume of corresponding solid in relation to z=0 using a sum of triagular meshes
-    # dfPointCloud is expected to be a pandas dataframe with relative coordinates (x,y,z)
-    # Optional inputs:
-    # how = cut/fill; cut = return cut volume; fill = return fill volume (return = cube volume - cut volume, where the cube is delimited by *_max coordinates)
 
-    # Required number of loops to compute total volume = number of points - 1
+def generateMeshAndCompute(df, enablePrompts=False):
+    # generates triangular mesh and computes volume of solid delimited by the point cloud and the xy plane
+    # df >> pandas dataframe expected to have 3 columns: x_rel, y_rel, z_rel
+
     totalVolume = 0.0 # initialize volume summation holder
     totalError = 0.0
     iteration = 0
-    pointCount = dfPointCloud['x_rel'].count()
+    pointCount = df['x_rel'].count()
+
     if enablePrompts: print('Computing volume from triangular meshes.')
-
-
-    # Adding piece of code to do the triangulation of meshes.
-    tri = Delaunay(dfPointCloud[['x_rel','y_rel']]) # Pass on the x, y coordinates and get triangular meshes' indexes.
+    tri = Delaunay(df[['x_rel','y_rel']]) # Pass on the x, y coordinates and get triangular meshes' indexes.
     mesh = tri.simplices # mesh contains a matrix holding indexes of all triangles for which we need to calculate
 
     for i in range(len(mesh)):
-        s1 = dfPointCloud.iloc[mesh[i][0]] # get series (row entry)
-        s2 = dfPointCloud.iloc[mesh[i][1]]
-        s3 = dfPointCloud.iloc[mesh[i][2]]
-
+        s1 = df.iloc[mesh[i][0]] # get series (row entry)
+        s2 = df.iloc[mesh[i][1]]
+        s3 = df.iloc[mesh[i][2]]
         dfAnalysis = pd.DataFrame([]) # build dataframe composed of these 3 entry set
         dfAnalysis = dfAnalysis.append(s1,ignore_index=True)
         dfAnalysis = dfAnalysis.append(s2,ignore_index=True)
@@ -230,20 +226,51 @@ def computeVolumePointCloud(dfPointCloud, how='cut', enablePrompts=True):
         totalVolume += volume # add to total volume
         totalError += error # accumulate error
 
-    # Returning computed values
-    if (how == 'cut'):
-        return [totalVolume, totalError]
-    elif (how == 'fill'):
-        # Obtaining range of point cloud values
-        x_max = dfPointCloud['x_rel'].max()
-        y_max = dfPointCloud['y_rel'].max()
-        z_max = dfPointCloud['z_rel'].max()
-        cubeVolume = x_max * y_max * z_max
-        #print('{x},{y},{z} >> {c}'.format(x=x_max,y=y_max,z=z_max,c=cubeVolume))
-        return [cubeVolume-totalVolume, totalError]
+    return [totalVolume, totalError]
+
+def computePointCloudVolume(dfCoordinates, elevation=0.0, enablePrompts=True):
+    # New way of computing the point cloud volume:
+    # point cloud is filtered within the function and cut/fill volumes returned
+
+    # Parameters:
+    # dfCoordinates >> a pandas dataframe representing the point cloud. It must contain at least 3 columns named "x_rel", "y_rel", "z_rel".
+    # elevation >> cutoff elevation elevation.
+    #   - All points above it will be part of the cut mesh.
+    #   - Points below this threshold will be considered for the fill mesh
+    # enablePrompts >> boolan variable to enable/disable prompts. Avoids excessive screen prompts when this function is called multiple times.
+
+    # Idea: cut volume is calculated by all points above elevation
+
+    # Step 1: Generating point cloud for Cut volume:
+    dfCut = dfCoordinates.copy(deep=True) # generates a copy of the original dataframe and its data
+    dfCut.loc[dfCut['z_rel'] < elevation, 'z_rel'] = elevation # update points above the threshold for the set elevation value
+
+    # Step 2: Generating point cloud for fill volume:
+    dfFill = dfCoordinates.copy(deep=True) # generates a copy of the original dataframe and its data
+    dfFill.loc[dfFill['z_rel'] >= elevation, 'z_rel'] = elevation # update points above the threshold for the set elevation value
+
+    # Step 3: Compute cut and fill volumes based on filtered point clouds
+
+    # Cut volume
+    cutVolumeTmp, cutError = generateMeshAndCompute(dfCut, enablePrompts = enablePrompts)
+    x_max = dfCut['x_rel'].max() # generates a cube for subtraction and for determinal actual cut volume required.
+    y_max = dfCut['y_rel'].max()
+    z_max = elevation
+    cubeVolume = x_max * y_max * z_max # rethink how you calculate this volume. It's not always a cube
+    cutVolume = cutVolumeTmp - cubeVolume
+
+    # Fill volume
+    if (elevation == 0.0):
+        fillVolume = 0.0
+        fillError = 0.0
     else:
-        print('Invalid argument passed to function call. how must be either \'cut\' or \'fill\'')
-        return [None, None]
+        fillVolumeTmp, fillError = generateMeshAndCompute(dfFill, enablePrompts = enablePrompts) # compute volume of fill area point cloud
+        x_max = dfFill['x_rel'].max() # generates a cube for subtraction and for determinal actual fill volume required.
+        y_max = dfFill['y_rel'].max()
+        z_max = dfFill['z_rel'].max()
+        cubeVolume = x_max * y_max * z_max
+        fillVolume = cubeVolume - fillVolumeTmp # actual fill volume is the difference between the computed fill and the cube delimited by its max coordinates.
+    return [cutVolume, cutError, fillVolume, fillError]
 
 def plotTerrain(dictPlotData, plotFile = 'plot.html'):
     # Plots a 3D Scatter in Plotly using x,y,z coordinates from dataset
@@ -381,8 +408,3 @@ def pointWithinQuadLimits(P,A,B,C,D):
         return True
     else:
         return False
-
-def pointWithingPolygon(P,Poly):
-    # To be implemented just for fun:
-    # True if point is inside 2D points delimited by Poly; False otherwise.
-    return True
