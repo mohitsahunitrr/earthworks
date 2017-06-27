@@ -249,15 +249,18 @@ def computePointCloudVolume(dfCoordinates, elevation=0.0, enablePrompts=True):
     dfFill = dfCoordinates.copy(deep=True) # generates a copy of the original dataframe and its data
     dfFill.loc[dfFill['z_rel'] >= elevation, 'z_rel'] = elevation # update points above the threshold for the set elevation value
 
+    # Step 3: Generating point cloud for flat projection at desired elevation. (Because I am a bit lazy today and don't want to compute the 4 extrems alone.)
+    dfFlatProjection = dfCoordinates.copy(deep=True)
+    dfFlatProjection['z_rel'] = elevation
+
     # Step 3: Compute cut and fill volumes based on filtered point clouds
+
+    # Flat projetction volume
+    flatVol, flatErr = generateMeshAndCompute(dfFlatProjection, enablePrompts = enablePrompts)
 
     # Cut volume
     cutVolumeTmp, cutError = generateMeshAndCompute(dfCut, enablePrompts = enablePrompts)
-    x_max = dfCut['x_rel'].max() # generates a cube for subtraction and for determinal actual cut volume required.
-    y_max = dfCut['y_rel'].max()
-    z_max = elevation
-    cubeVolume = x_max * y_max * z_max # rethink how you calculate this volume. It's not always a cube
-    cutVolume = cutVolumeTmp - cubeVolume
+    cutVolume = cutVolumeTmp - flatVol
 
     # Fill volume
     if (elevation == 0.0):
@@ -265,11 +268,7 @@ def computePointCloudVolume(dfCoordinates, elevation=0.0, enablePrompts=True):
         fillError = 0.0
     else:
         fillVolumeTmp, fillError = generateMeshAndCompute(dfFill, enablePrompts = enablePrompts) # compute volume of fill area point cloud
-        x_max = dfFill['x_rel'].max() # generates a cube for subtraction and for determinal actual fill volume required.
-        y_max = dfFill['y_rel'].max()
-        z_max = dfFill['z_rel'].max()
-        cubeVolume = x_max * y_max * z_max
-        fillVolume = cubeVolume - fillVolumeTmp # actual fill volume is the difference between the computed fill and the cube delimited by its max coordinates.
+        fillVolume = flatVol - fillVolumeTmp # actual fill volume is the difference between the computed fill and the cube delimited by its max coordinates.
     return [cutVolume, cutError, fillVolume, fillError]
 
 def plotTerrain(dictPlotData, plotFile = 'plot.html'):
