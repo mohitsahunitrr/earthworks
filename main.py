@@ -2,6 +2,7 @@
 
 from functionsEarthworks import *
 from functionsProgramFlow import *
+from functionsTestScenarios import *
 from classes import *
 
 # Custom functions:
@@ -20,14 +21,15 @@ print('##################################')
 
 while True:
     print('Type one of the following options:')
-    print('[1] Load data from GPS file (*.gpx).')
+    print('[1] Parse data from GPS file (*.gpx).')
     print('[2] Generate UTM coordinates file from latitude,longitude.')
     print('[3] Load construction area limits (4 GPS coordinates) from \'limits.csv\'')
-    print('[4] Compute cut/fill volumes from existing UTM coordinates file.')
+    print('[4] Compute cut/fill volumes.')
     print('[5] View point cloud of existing UTM coordinates file.')
-    print('[6] Exit program.')
+    print('[6] Generate test scenario.')
+    print('[7] Exit program.')
     optionLevel1 = getNumericalInput('Option: ')
-    if optionLevel1 in (1,2,3,4,5,6):
+    if optionLevel1 in (1,2,3,4,5,6,7):
         if (optionLevel1==1): # Option 1: Parse .gpx file
             print('------------------')
             print("Reading .gpx file.")
@@ -52,14 +54,23 @@ while True:
             print('Construction limits established.')
             print('All survey points outside of construction limits will be disregarded.')
         elif (optionLevel1==4): # Option 3: Compute volumes
-            # [1] Compute volumes for a given terrain elevation.
-            # [2] Find elevation for optimal volumes (cut equals fill)
-            # COMMENTING FOR USING TEST SET 01
-            dfSurvey = loadSurveyData() # load dataframe from csv file
-            dfSurvey = createRelativeDataframe(dfSurvey) # add relative coordinates (x_rel,y_rel,z_rel)
-            # COMMENTING FOR USING TEST SET 01
-            # dfSurvey = pd.read_csv('generatedPointCloud.csv')
-            # COMMENTING FOR USING TEST SET 01
+
+            while True:
+                print('---------------------------------------')
+                print('[1] Use existing data in gpsDataUTM.csv')
+                print('[2] Use data from generatedPointCloud.csv')
+                optionLevel2 = getNumericalInput('Option: ')
+                if optionLevel2 in (1,2):
+                    if optionLevel2==1: # Use real world data
+                        dfSurvey = loadSurveyData() # load dataframe from csv file
+                        dfSurvey = createRelativeDataframe(dfSurvey) # add relative coordinates (x_rel,y_rel,z_rel)
+                        break
+                    elif optionLevel2==2: # Use test set
+                        dfSurvey = pd.read_csv('generatedPointCloud.csv')
+                        print('Data from test set successfully loaded.')
+                        break
+
+            # Save maximum values
             x_max = dfSurvey.x_rel.max()
             y_max = dfSurvey.y_rel.max()
             z_max = dfSurvey.z_rel.max()
@@ -184,9 +195,16 @@ while True:
                         break # Back
                 else:
                     print('Invalid option. Try again.')
-        elif (optionLevel1==6): # Exit program
+        elif (optionLevel1==6): # generate test set
+            pointsPerPlane = getNumericalInput('Please provide the amount of points per plane: ')
+            pointsPerPlane = int(pointsPerPlane)
+            dfTest = generateTestScenario01(amountOfPoints=pointsPerPlane)
+            plot1 = scatterPlotData(dfTest,'Test set','rgba(217, 217, 217, 0.14)')
+            plotData = [plot1]
+            urlFull = plotTerrain(plotData,'plotTestSet.html')
             break
-        #break
+        elif (optionLevel1==7): # Exit program
+            break
     else:
         print('Invalid option. Try again.')
     time.sleep(1) # do nothing for a couple of seconds

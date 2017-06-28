@@ -49,7 +49,7 @@ def generatePointCloudFromPoints(P1,P2,P3, xRange, yRange, linearSpaceSize=1000,
 
     return sample
 
-def generateTestScenario01():
+def generateTestScenario01(amountOfPoints=250):
     # Generates a test set
     # My collection of known points
     P1 = np.array([[0,0,0]])
@@ -85,17 +85,20 @@ def generateTestScenario01():
                         data.iloc[5],
                         data.iloc[15],
                         xRange=np.array([0.0,5.0]),
-                        yRange=np.array([0.0,4.0])) # Plane: P9,P6,P16
+                        yRange=np.array([0.0,4.0]),
+                        randomPointsCount = amountOfPoints) # Plane: P9,P6,P16
     df2 = generatePointCloudFromPoints(data.iloc[1],
                         data.iloc[2],
                         data.iloc[12],
                         xRange=np.array([5.0,8.0]),
-                        yRange=np.array([0.0,4.0]))
+                        yRange=np.array([0.0,4.0]),
+                        randomPointsCount = amountOfPoints)
     df3 = generatePointCloudFromPoints(data.iloc[9],
                         data.iloc[17],
                         data.iloc[16],
                         xRange=np.array([8.0,13.0]),
-                        yRange=np.array([0.0,4.0]))
+                        yRange=np.array([0.0,4.0]),
+                        randomPointsCount = amountOfPoints)
     df = pd.concat([df1,df2,df3])
     print('{p} points generated thru equations.'.format(p=df.shape[0]))
     print('Point cloud density: {x} points per cubic meter'.format(x=df.shape[0]/(data.x.max()*data.y.max()*data.z.max())))
