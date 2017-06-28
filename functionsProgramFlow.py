@@ -69,8 +69,11 @@ def computeOptimalVolumes(dfCoordinates, stepSize=1.0):
     p.line(x, y1, legend="Cut Volume",line_color="SteelBlue", line_dash="dotdash", line_width=4)
     p.line(x, y2, legend="Fill Volume",line_color="Coral", line_dash="dotdash", line_width=4)
     p.legend.location = "top_right"
+    p.xaxis.axis_label = 'Elevation (m)'
+    p.yaxis.axis_label = 'Volume (㎥)'
+    p.yaxis[0].formatter = PrintfTickFormatter(format="%d")
 
-    output_file("plot.html", title="Cut/Fill Volumes X Elevation")
+    output_file("plotOptimalVolumesAnalysis.html", title="Cut/Fill Volumes X Elevation")
     show(p)
     print('Script runtime: {t}'.format(t=datetime.now() - startTime))
     print('--------------------------------')

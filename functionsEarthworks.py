@@ -27,7 +27,7 @@ from plotly.offline import download_plotlyjs, plot
 
 # Plotting with Bokeh
 from bokeh.plotting import figure, show, output_file
-from bokeh.models import HoverTool, BoxSelectTool
+from bokeh.models import HoverTool, BoxSelectTool, PrintfTickFormatter
 
 def getNumericalInput(prompt=''):
     # gets numerical input from user.
@@ -297,6 +297,7 @@ def plotTerrain(dictPlotData, plotFile = 'plot.html'):
         )
         traces.append(trace)
     layout = go.Layout(
+        title='Survey data',
         autosize=False,
         width=1000,
         height=600,

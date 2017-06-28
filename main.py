@@ -21,53 +21,48 @@ print('##################################')
 
 while True:
     print('Type one of the following options:')
-    print('[1] Parse data from GPS file (*.gpx).')
-    print('[2] Generate UTM coordinates file from latitude,longitude.')
-    print('[3] Load construction area limits (4 GPS coordinates) from \'limits.csv\'')
-    print('[4] Compute cut/fill volumes.')
-    print('[5] View point cloud of existing UTM coordinates file.')
-    print('[6] Generate test scenario.')
-    print('[7] Exit program.')
+    # print('[1] Parse data from GPS file (*.gpx).')
+    # print('[2] Generate UTM coordinates file from latitude,longitude.')
+    # print('[3] Load construction area limits (4 GPS coordinates) from \'limits.csv\'')
+    print('[1] Compute cut/fill volumes.')
+    print('[2] View point cloud of existing UTM coordinates file.')
+    print('[3] Generate test scenario.')
+    print('[4] Load terrain limits filter from limits.csv')
+    print('[5] Exit program.')
     optionLevel1 = getNumericalInput('Option: ')
-    if optionLevel1 in (1,2,3,4,5,6,7):
-        if (optionLevel1==1): # Option 1: Parse .gpx file
-            print('------------------')
-            print("Reading .gpx file.")
-            # Check existing .gpx files on current working folder and list them for selection
-            parseGpxFile('gpsData.gpx') # parse .gpx file
-            print('XML parsing complete.')
-            print('---------------------')
-        elif (optionLevel1==2): # Option 2: Generate UTM
-            print('---------------------------')
-            print('Generating UTM coordinates.')
-            # Check existing .csv files on current working folder and list them for selection
-            generateUTM('gpsData.csv','gpsDataUTM.csv') # generates csv file with UTM coordinates
-            print('Process completed.')
-            print('------------------')
-        elif (optionLevel1==3): # Load construction area limits from csv file
-            print('--------------------------------')
-            print('Loading terrain limits from file.')
-            print('Expected entry example: -24.9361964688,-51.3905997667')
-            dfLimits = pd.read_csv('limits.csv')
-            dfLimits = limitsUTM(dfLimits) # inserts UTM coordinates
-            # ERROR CHECK TO IMPLEMENT: verify if boundaries are withing surveyed terrain and warn if outside (also set dfLimits to None if that's the case)
-            print('Construction limits established.')
-            print('All survey points outside of construction limits will be disregarded.')
-        elif (optionLevel1==4): # Option 3: Compute volumes
+    if optionLevel1 in (1,2,3,4,5):
+
+        if (optionLevel1==1): # Option 1: Compute volumes
 
             while True:
                 print('---------------------------------------')
-                print('[1] Use existing data in gpsDataUTM.csv')
-                print('[2] Use data from generatedPointCloud.csv')
+                print('[1] Use data from gpsData.gpx')
+                print('[2] Use data from in gpsDataUTM.csv')
+                print('[3] Use data from generatedPointCloud.csv')
+
                 optionLevel2 = getNumericalInput('Option: ')
-                if optionLevel2 in (1,2):
-                    if optionLevel2==1: # Use real world data
+                if optionLevel2 in (1,2,3):
+                    if optionLevel2==1:
+                        # generate UTM file from .gpx and load data
+                        print("Reading .gpx file.")
+                        # Check existing .gpx files on current working folder and list them for selection
+                        parseGpxFile('gpsData.gpx') # parse .gpx file
+                        print('XML parsing complete.')
+                        print('Generating UTM coordinates.')
+                        # Check existing .csv files on current working folder and list them for selection
+                        generateUTM('gpsData.csv','gpsDataUTM.csv') # generates csv file with UTM coordinates
+                        dfSurvey = loadSurveyData() # load dataframe from csv file
+                        dfSurvey = createRelativeDataframe(dfSurvey) # add relative coordinates (x_rel,y_rel,z_rel)
+                        print('Process completed.')
+                        break
+                    elif optionLevel2==2: # Use real world data from converted UTM file
                         dfSurvey = loadSurveyData() # load dataframe from csv file
                         dfSurvey = createRelativeDataframe(dfSurvey) # add relative coordinates (x_rel,y_rel,z_rel)
                         break
-                    elif optionLevel2==2: # Use test set
+                    elif optionLevel2==3: # Use test set
                         dfSurvey = pd.read_csv('generatedPointCloud.csv')
                         print('Data from test set successfully loaded.')
+                        print('{n} points available in test set.'.format(n=dfSurvey.x_rel.count()))
                         break
 
             # Save maximum values
@@ -82,7 +77,7 @@ while True:
                 print('[2] Find elevation for optimal volumes (cut equals fill).')
                 print('[3] Back to previous menu.')
                 optionLevel2 = getNumericalInput('Option: ')
-                if optionLevel2 in (1,2,3,4):
+                if optionLevel2 in (1,2,3):
                     if optionLevel2==1:
                         desiredElevation = getNumericalInput('Please input desired terrain level: ')
                         startTime = datetime.now() # start the clock on this script
@@ -151,7 +146,7 @@ while True:
                         break
                 else:
                     print('Invalid option. Try again.')
-        elif (optionLevel1==5): # Option 4: View data
+        elif (optionLevel1==2): # Option 2: View data
             dfSurvey = loadSurveyData() # load dataframe from csv file
             dfSurvey = createRelativeDataframe(dfSurvey) # add relative coordinates (x_rel,y_rel,z_rel)
             x_max = dfSurvey.x_rel.max()
@@ -160,8 +155,8 @@ while True:
             while True:
                 print('------------------------------------')
                 print('Type one of the following options:')
-                print('[1] Print full dataset.')
-                print('[2] Print Cut and Fill datasets given a reference relative elevation.')
+                print('[1] Plot full dataset.')
+                print('[2] Plot Cut and Fill datasets given a reference elevation.')
                 print('[3] Back to previous menu.')
                 optionLevel2 = getNumericalInput('Option: ')
                 if optionLevel2 in (1,2,3):
@@ -195,7 +190,7 @@ while True:
                         break # Back
                 else:
                     print('Invalid option. Try again.')
-        elif (optionLevel1==6): # generate test set
+        elif (optionLevel1==3): # generate test set
             pointsPerPlane = getNumericalInput('Please provide the amount of points per plane: ')
             pointsPerPlane = int(pointsPerPlane)
             dfTest = generateTestScenario01(amountOfPoints=pointsPerPlane)
@@ -203,7 +198,17 @@ while True:
             plotData = [plot1]
             urlFull = plotTerrain(plotData,'plotTestSet.html')
             break
-        elif (optionLevel1==7): # Exit program
+        elif optionLevel1==4:
+            print('--------------------------------')
+            print('Loading terrain limits from file.')
+            print('Expected entry example: -24.9361964688,-51.3905997667')
+            dfLimits = pd.read_csv('limits.csv')
+            dfLimits = limitsUTM(dfLimits) # inserts UTM coordinates
+            # ERROR CHECK TO IMPLEMENT: verify if boundaries are withing surveyed terrain and warn if outside (also set dfLimits to None if that's the case)
+            print('Construction limits established.')
+            print('All survey points outside of construction limits will be disregarded.')
+            break
+        elif (optionLevel1==5): # Exit program
             break
     else:
         print('Invalid option. Try again.')
