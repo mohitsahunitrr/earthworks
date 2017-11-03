@@ -228,6 +228,10 @@ def generateMeshAndCompute(df, enablePrompts=False):
 
     return [totalVolume, totalError]
 
+def applyPlaneEquation(x, y, a, b, c, xo, yo, zo):
+    # returns z value for plane equation: z = ((-a*(x-xo)-b*(y-yo))/c)+zo
+    return ((-a*(x-xo)-b*(y-yo))/c)+zo
+
 def computePointCloudVolume(dfCoordinates, elevation=0.0, enablePrompts=True):
     # New way of computing the point cloud volume:
     # point cloud is filtered within the function and cut/fill volumes returned
@@ -251,7 +255,39 @@ def computePointCloudVolume(dfCoordinates, elevation=0.0, enablePrompts=True):
 
     # Step 3: Generating point cloud for flat projection at desired elevation. (Because I am a bit lazy today and don't want to compute the 4 extrems alone.)
     dfFlatProjection = dfCoordinates.copy(deep=True)
-    dfFlatProjection['z_rel'] = elevation
+    dfFlatProjection['z_rel'] = elevation # reactivate this line to replace slope equation
+    
+    
+    
+    
+#    # Replacing for a function z=f(x,y) that accounts for terrain slope (future version)
+#    x_max = dfCoordinates.x_rel.max()
+#    y_max = dfCoordinates.y_rel.max()
+#    z_ref = elevation
+#    # Setting up plane equation
+#    A = np.array([x_max, y_max, z_ref])
+#    B = np.array([x_max, 0, z_ref])
+#    z_ref_drop = terrainDropFactor * x_max # apply terrain drop factor to define last coordinate on drop plane
+#    C = np.array([0,0,z_ref_drop])
+#    AB = B-A # vector within plane
+#    BC = C-B # vector within plane
+#    NV = np.cross(AB,BC) # vector that is normal to plane
+#    # Plane values; plane equation is a*(x-xo)+b*(y-yo)+c*(z-zo)=0
+#    a = NV[0]
+#    b = NV[1]
+#    c = NV[2]
+#    xo = A[0]
+#    yo = A[1]
+#    zo = A[2]
+#    # plane equation = ((-a*(x-xo)-b*(y-yo))/c)+zo
+#    dfFlatProjection['z_rel'] = np.vectorize(applyPlaneEquation)(dfFlatProjection['x_rel'],
+#                                                                 dfFlatProjection['y_rel'],
+#                                                                 a,b,c,xo,yo,zo)
+
+                                                                 
+                                                                 
+                                                                 
+                                                                 
 
     # Step 3: Compute cut and fill volumes based on filtered point clouds
 

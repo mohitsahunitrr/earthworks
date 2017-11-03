@@ -100,8 +100,9 @@ def generateTestScenario01(amountOfPoints=250):
                         yRange=np.array([0.0,4.0]),
                         randomPointsCount = amountOfPoints)
     df = pd.concat([df1,df2,df3])
-    print('{p} points generated thru equations.'.format(p=df.shape[0]))
-    print('Point cloud density: {x} points per cubic meter'.format(x=df.shape[0]/(data.x.max()*data.y.max()*data.z.max())))
+    # print('{p} points generated thru equations.'.format(p=df.shape[0]))
+    pcDensity = df.shape[0]/(data.x.max()*data.y.max()*data.z.max())
+    # print('Point cloud density: {x} points per cubic meter'.format(x=pcDensity))
     df=df.rename(columns={'x':'x_rel','y':'y_rel','z':'z_rel'})
     df.to_csv('generatedPointCloud.csv')
-    return df
+    return [df, pcDensity]
