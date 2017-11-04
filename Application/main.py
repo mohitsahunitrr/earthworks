@@ -26,12 +26,11 @@ while True:
     # print('[3] Load construction area limits (4 GPS coordinates) from \'limits.csv\'')
     print('[1] Compute cut/fill volumes.')
     print('[2] View point cloud scatter plot.')
-    print('[3] Generate test scenario.')
-    print('[4] Load terrain limits filter from limits.csv')
-    print('[5] Run accuracy tests.')
-    print('[6] Exit program.')
+    print('[3] Load terrain limits filter from limits.csv')
+    print('[4] Generate test scenario.')
+    print('[5] Exit program.')
     optionLevel1 = getNumericalInput('Option: ')
-    if optionLevel1 in (1,2,3,4,5,6):
+    if optionLevel1 in (1,2,3,4,5):
 
         if (optionLevel1==1): # Option 1: Compute volumes
 
@@ -188,15 +187,7 @@ while True:
                         break
                 else:
                     print('Invalid option. Try again.')
-        elif (optionLevel1==3): # generate test set
-            pointsPerPlane = getNumericalInput('Please provide the amount of points per plane: ')
-            pointsPerPlane = int(pointsPerPlane)
-            dfTest, pcDen = generateTestScenario01(amountOfPoints=pointsPerPlane)
-            plot1 = scatterPlotData(dfTest,'Test set','rgba(217, 217, 217, 0.14)')
-            plotData = [plot1]
-            urlFull = plotTerrain(plotData,'plotTestSet.html')
-            break
-        elif optionLevel1==4:
+        elif optionLevel1==3:
             print('--------------------------------')
             print('Loading terrain limits from file.')
             print('Expected entry example: -24.9361964688,-51.3905997667')
@@ -206,48 +197,57 @@ while True:
             print('Construction limits established.')
             print('All survey points outside of construction limits will be disregarded.')
             break
-        elif (optionLevel1==5): # Run accuracy tests
-            # Step 1: Determine point cloud densities that will undergo tests
-            densities = [10,20,50,100,150,200,250,300] # test set if given by 3 planes, so these values will be multiplied by 3 each for the total number of points
-            #densities = [10,20]
-            # Step 2: For each density, generate test set and store computed volume.
-            iterations = len(densities) # number of iterations
-            iteration = 0 # progress bar counter
-
-            dfResults = pd.DataFrame([]) # build dataframe for storing results
-
-            for points in densities:
-                points = int(points)
-                dfTest, pcDen = generateTestScenario01(amountOfPoints=points)
-                cutVol, cutErr, fillVol, fillErr = computePointCloudVolume(dfTest, elevation = 0.0, enablePrompts=False)
-                error = abs(170.0-cutVol)/170.0
-                accuracy = 1-error
-                # store result and density
-                testResult = pd.Series(dict(
-                                        density=pcDen,
-                                        error=error,
-                                        accuracy=accuracy))
-                dfResults = dfResults.append(testResult, ignore_index=True) # append newly converted data to dataframe
-                iteration += 1 # update progress counter
-                printProgressBar(iteration, iterations, prefix = 'Progress:', suffix = 'Complete', length = 50) # update progress bar
-            # Step 3: Plot graph: Density Vs. Accuracy (or Error)
-            #Plotting with Bokeh
-            x = dfResults['density'].values
-            y1 = dfResults['accuracy'].values
-            y2 = dfResults['error'].values
-
-            TOOLS = [BoxSelectTool(), HoverTool()]
-            p = figure(title="Program Analysis Report on Test Set", tools = TOOLS)
-            p.line(x, y1, legend="Accurracy",line_color="SteelBlue", line_dash="dotdash", line_width=4)
-            p.line(x, y2, legend="Error",line_color="Coral", line_dash="dotdash", line_width=4)
-            p.legend.location = "bottom_left"
-            p.xaxis.axis_label = 'Cloud density (points/㎥)'
-            p.yaxis.axis_label = 'Absolute scale (0-1)'
-            #p.yaxis[0].formatter = PrintfTickFormatter(format="%d")
-            output_file("plotProgramAnalysisReport.html", title="Program Analysis Report on Test Set")
-            show(p)
+        elif (optionLevel1==4): # generate test set
+            pointsPerPlane = getNumericalInput('Please provide the amount of points per plane: ')
+            pointsPerPlane = int(pointsPerPlane)
+            dfTest, pcDen = generateTestScenario01(amountOfPoints=pointsPerPlane)
+            plot1 = scatterPlotData(dfTest,'Test set','rgba(217, 217, 217, 0.14)')
+            plotData = [plot1]
+            urlFull = plotTerrain(plotData,'plotTestSet.html')
             break
-        elif (optionLevel1==6): # Exit program
+
+#        elif (optionLevel1==5): # Run accuracy tests
+#            # Step 1: Determine point cloud densities that will undergo tests
+#            densities = [10,20,50,100,150,200,250,300] # test set if given by 3 planes, so these values will be multiplied by 3 each for the total number of points
+#            #densities = [10,20]
+#            # Step 2: For each density, generate test set and store computed volume.
+#            iterations = len(densities) # number of iterations
+#            iteration = 0 # progress bar counter
+#
+#            dfResults = pd.DataFrame([]) # build dataframe for storing results
+#
+#            for points in densities:
+#                points = int(points)
+#                dfTest, pcDen = generateTestScenario01(amountOfPoints=points)
+#                cutVol, cutErr, fillVol, fillErr = computePointCloudVolume(dfTest, elevation = 0.0, enablePrompts=False)
+#                error = abs(170.0-cutVol)/170.0
+#                accuracy = 1-error
+#                # store result and density
+#                testResult = pd.Series(dict(
+#                                        density=pcDen,
+#                                        error=error,
+#                                        accuracy=accuracy))
+#                dfResults = dfResults.append(testResult, ignore_index=True) # append newly converted data to dataframe
+#                iteration += 1 # update progress counter
+#                printProgressBar(iteration, iterations, prefix = 'Progress:', suffix = 'Complete', length = 50) # update progress bar
+#            # Step 3: Plot graph: Density Vs. Accuracy (or Error)
+#            #Plotting with Bokeh
+#            x = dfResults['density'].values
+#            y1 = dfResults['accuracy'].values
+#            y2 = dfResults['error'].values
+#
+#            TOOLS = [BoxSelectTool(), HoverTool()]
+#            p = figure(title="Program Analysis Report on Test Set", tools = TOOLS)
+#            p.line(x, y1, legend="Accurracy",line_color="SteelBlue", line_dash="dotdash", line_width=4)
+#            p.line(x, y2, legend="Error",line_color="Coral", line_dash="dotdash", line_width=4)
+#            p.legend.location = "bottom_left"
+#            p.xaxis.axis_label = 'Cloud density (points/㎥)'
+#            p.yaxis.axis_label = 'Absolute scale (0-1)'
+#            #p.yaxis[0].formatter = PrintfTickFormatter(format="%d")
+#            output_file("plotProgramAnalysisReport.html", title="Program Analysis Report on Test Set")
+#            show(p)
+#            break
+        elif (optionLevel1==5): # Exit program
             break
     else:
         print('Invalid option. Try again.')
