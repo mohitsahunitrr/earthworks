@@ -18,6 +18,9 @@ Given a .gpx file obtained from a GPS survey, this application will compute the 
 
 Done!
 
+### Use Case
+https://github.com/agu3rra/earthworks/blob/master/Documentation.pdf 
+
 ### Bug reports are welcome!
 
 ### Important: Setting up Plotly api_key
